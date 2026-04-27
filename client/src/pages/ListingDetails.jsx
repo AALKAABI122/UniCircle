@@ -37,7 +37,9 @@ function ListingDetails() {
   if (loading) {
     return (
       <div style={styles.page}>
-        <p>Loading listing...</p>
+        <div style={styles.card}>
+          <p>Loading listing...</p>
+        </div>
       </div>
     );
   }
@@ -47,6 +49,7 @@ function ListingDetails() {
       <div style={styles.page}>
         <div style={styles.card}>
           <h1>Listing not found</h1>
+          <p>This item may have been removed or the link may be incorrect.</p>
           <button onClick={() => navigate("/")} style={styles.backButton}>
             Back to Home
           </button>
@@ -54,6 +57,11 @@ function ListingDetails() {
       </div>
     );
   }
+
+  const emailSubject = encodeURIComponent(`Interest in ${listing.title}`);
+  const emailBody = encodeURIComponent(
+    `Hi, I saw your listing "${listing.title}" on UniCircle and I am interested. Is it still available?`
+  );
 
   return (
     <div style={styles.page}>
@@ -76,45 +84,63 @@ function ListingDetails() {
           </div>
 
           <div style={styles.detailsCard}>
-            <p style={styles.category}>{listing.category}</p>
+            <p style={styles.category}>{listing.category || "Uncategorised"}</p>
+
             <h1 style={styles.title}>{listing.title}</h1>
+
             <p style={styles.price}>£{listing.price}</p>
 
             <div style={styles.infoRow}>
               <strong>Condition:</strong>
-              <span>{listing.condition}</span>
+              <span>{listing.condition || "Not provided"}</span>
             </div>
 
             <div style={styles.infoRow}>
               <strong>Location:</strong>
-              <span>{listing.location}</span>
+              <span>{listing.location || "Not provided"}</span>
             </div>
 
             <div style={styles.infoRow}>
               <strong>Status:</strong>
-              <span>{listing.status}</span>
+              <span>{listing.status || "active"}</span>
             </div>
 
             <h2 style={styles.subheading}>Description</h2>
-            <p style={styles.description}>{listing.description}</p>
+            <p style={styles.description}>
+              {listing.description || "No description provided."}
+            </p>
 
             <div style={styles.sellerBox}>
               <h2 style={styles.subheading}>Seller Information</h2>
+
               <p>
-                <strong>Email:</strong> {listing.sellerEmail}
+                <strong>Email:</strong>{" "}
+                {listing.sellerEmail || "No seller email provided"}
               </p>
-              <button style={styles.contactButton}>
-                Contact Seller
-              </button>
+
+              {listing.sellerEmail ? (
+                <a
+                  href={`mailto:${listing.sellerEmail}?subject=${emailSubject}&body=${emailBody}`}
+                  style={styles.contactButton}
+                >
+                  Contact Seller
+                </a>
+              ) : (
+                <button style={styles.disabledButton} disabled>
+                  Contact unavailable
+                </button>
+              )}
             </div>
 
             <div style={styles.safetyBox}>
               <h2 style={styles.safetyTitle}>Safety Tips</h2>
+
               <ul style={styles.safetyList}>
                 <li>Meet in a public place on campus.</li>
                 <li>Do not send money before seeing the item.</li>
+                <li>Do not share bank details or passwords.</li>
                 <li>Check the item condition before paying.</li>
-                <li>Report suspicious listings to the project team.</li>
+                <li>Use your university email when contacting sellers.</li>
               </ul>
             </div>
           </div>
@@ -134,6 +160,15 @@ const styles = {
   container: {
     maxWidth: "1100px",
     margin: "0 auto",
+  },
+  card: {
+    backgroundColor: "white",
+    padding: "28px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    maxWidth: "600px",
+    margin: "80px auto",
+    textAlign: "center",
   },
   backButton: {
     marginBottom: "20px",
@@ -191,6 +226,7 @@ const styles = {
     justifyContent: "space-between",
     borderBottom: "1px solid #e5e7eb",
     padding: "12px 0",
+    gap: "20px",
   },
   subheading: {
     fontSize: "20px",
@@ -217,6 +253,21 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
     fontSize: "16px",
+    textDecoration: "none",
+    display: "block",
+    textAlign: "center",
+    boxSizing: "border-box",
+  },
+  disabledButton: {
+    marginTop: "10px",
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#9ca3af",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "16px",
+    cursor: "not-allowed",
   },
   safetyBox: {
     backgroundColor: "#fff7ed",
