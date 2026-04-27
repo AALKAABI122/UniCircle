@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 
 function Home() {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [listings, setListings] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
@@ -50,14 +53,14 @@ function Home() {
   const handleLogout = async () => {
     await signOut(auth);
     alert("Logged out successfully.");
-    window.location.href = "/";
+    navigate("/");
   };
 
   const handleSellClick = (e) => {
     if (!user) {
       e.preventDefault();
       alert("Please login with a verified email before selling an item.");
-      window.location.href = "/login";
+      navigate("/login");
     }
   };
 
@@ -68,7 +71,8 @@ function Home() {
       item.title?.toLowerCase().includes(search) ||
       item.category?.toLowerCase().includes(search) ||
       item.description?.toLowerCase().includes(search) ||
-      item.location?.toLowerCase().includes(search)
+      item.location?.toLowerCase().includes(search) ||
+      item.condition?.toLowerCase().includes(search)
     );
   });
 
@@ -89,9 +93,9 @@ function Home() {
               </button>
             </>
           ) : (
-            <a href="/login" style={styles.navLink}>
+            <button onClick={() => navigate("/login")} style={styles.navButton}>
               Login
-            </a>
+            </button>
           )}
 
           <a href="/create" onClick={handleSellClick} style={styles.sellButton}>
@@ -148,7 +152,12 @@ function Home() {
                 <p style={styles.condition}>Condition: {item.condition}</p>
                 <p style={styles.price}>£{item.price}</p>
 
-                <button style={styles.viewButton}>View Details</button>
+                <button
+                  style={styles.viewButton}
+                  onClick={() => navigate(`/listing/${item.id}`)}
+                >
+                  View Details
+                </button>
               </div>
             ))}
           </div>
@@ -186,10 +195,13 @@ const styles = {
     gap: "16px",
     alignItems: "center",
   },
-  navLink: {
-    textDecoration: "none",
+  navButton: {
+    backgroundColor: "transparent",
+    border: "none",
     color: "#333",
     fontWeight: "500",
+    fontSize: "16px",
+    cursor: "pointer",
   },
   userText: {
     color: "#333",
