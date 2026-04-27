@@ -36,7 +36,7 @@ function Home() {
 
         <nav style={styles.nav}>
           <a href="/login" style={styles.navLink}>Login</a>
-          <a href="/register" style={styles.sellButton}>Sell Item</a>
+          <a href="/create" style={styles.sellButton}>Sell Item</a>
         </nav>
       </header>
 
