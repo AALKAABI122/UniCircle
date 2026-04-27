@@ -1,16 +1,32 @@
 import React, { useState } from "react";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "../firebase";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    console.log("Email:", email);
-    console.log("Password:", password);
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email.trim().toLowerCase(),
+        password
+      );
 
-    alert("Login button clicked. Firebase login will be added later.");
+      if (!userCredential.user.emailVerified) {
+        alert("Please verify your email before accessing UniCircle.");
+        await signOut(auth);
+        return;
+      }
+
+      alert("Login successful!");
+      window.location.href = "/";
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (

@@ -1,4 +1,10 @@
+import React, { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "../firebase";
+
 function Home() {
+  const [user, setUser] = useState(null);
+
   const sampleListings = [
     {
       id: 1,
@@ -26,6 +32,32 @@ function Home() {
     },
   ];
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser && currentUser.emailVerified) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    alert("Logged out successfully.");
+    window.location.href = "/";
+  };
+
+  const handleSellClick = (e) => {
+    if (!user) {
+      e.preventDefault();
+      alert("Please login with a verified email before selling an item.");
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -35,8 +67,22 @@ function Home() {
         </div>
 
         <nav style={styles.nav}>
-          <a href="/login" style={styles.navLink}>Login</a>
-          <a href="/create" style={styles.sellButton}>Sell Item</a>
+          {user ? (
+            <>
+              <span style={styles.userText}>{user.email}</span>
+              <button onClick={handleLogout} style={styles.logoutButton}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <a href="/login" style={styles.navLink}>
+              Login
+            </a>
+          )}
+
+          <a href="/create" onClick={handleSellClick} style={styles.sellButton}>
+            Sell Item
+          </a>
         </nav>
       </header>
 
@@ -109,6 +155,18 @@ const styles = {
     textDecoration: "none",
     color: "#333",
     fontWeight: "500",
+  },
+  userText: {
+    color: "#333",
+    fontSize: "14px",
+  },
+  logoutButton: {
+    backgroundColor: "#ef4444",
+    color: "white",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
   sellButton: {
     textDecoration: "none",
