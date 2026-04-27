@@ -1,36 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 function Home() {
   const [user, setUser] = useState(null);
-
-  const sampleListings = [
-    {
-      id: 1,
-      title: "MacBook Pro 2020",
-      price: "£550",
-      category: "Electronics",
-      location: "Moulsecoomb Campus",
-      description: "Good condition, suitable for university work.",
-    },
-    {
-      id: 2,
-      title: "Desk Chair",
-      price: "£25",
-      category: "Furniture",
-      location: "Falmer",
-      description: "Comfortable chair, ideal for student rooms.",
-    },
-    {
-      id: 3,
-      title: "Computer Science Textbook",
-      price: "£15",
-      category: "Books",
-      location: "City Campus",
-      description: "Used textbook, still in good condition.",
-    },
-  ];
+  const [listings, setListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(true);
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -42,6 +19,32 @@ function Home() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const listingsQuery = query(
+          collection(db, "listings"),
+          orderBy("createdAt", "desc")
+        );
+
+        const querySnapshot = await getDocs(listingsQuery);
+
+        const listingsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setListings(listingsData);
+      } catch (error) {
+        alert("Error loading listings: " + error.message);
+      } finally {
+        setLoadingListings(false);
+      }
+    };
+
+    fetchListings();
   }, []);
 
   const handleLogout = async () => {
@@ -57,6 +60,17 @@ function Home() {
       window.location.href = "/login";
     }
   };
+
+  const filteredListings = listings.filter((item) => {
+    const search = searchText.toLowerCase();
+
+    return (
+      item.title?.toLowerCase().includes(search) ||
+      item.category?.toLowerCase().includes(search) ||
+      item.description?.toLowerCase().includes(search) ||
+      item.location?.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <div style={styles.page}>
@@ -96,6 +110,8 @@ function Home() {
           <input
             type="text"
             placeholder="Search for laptops, books, furniture..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             style={styles.searchInput}
           />
           <button style={styles.searchButton}>Search</button>
@@ -105,19 +121,38 @@ function Home() {
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Latest Listings</h2>
 
-        <div style={styles.grid}>
-          {sampleListings.map((item) => (
-            <div key={item.id} style={styles.card}>
-              <div style={styles.imagePlaceholder}>No Image</div>
-              <p style={styles.category}>{item.category}</p>
-              <h3 style={styles.itemTitle}>{item.title}</h3>
-              <p style={styles.description}>{item.description}</p>
-              <p style={styles.location}>{item.location}</p>
-              <p style={styles.price}>{item.price}</p>
-              <button style={styles.viewButton}>View Details</button>
-            </div>
-          ))}
-        </div>
+        {loadingListings ? (
+          <p>Loading listings...</p>
+        ) : filteredListings.length === 0 ? (
+          <p>No listings found.</p>
+        ) : (
+          <div style={styles.grid}>
+            {filteredListings.map((item) => (
+              <div key={item.id} style={styles.card}>
+                <div style={styles.imagePlaceholder}>
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      style={styles.itemImage}
+                    />
+                  ) : (
+                    "No Image"
+                  )}
+                </div>
+
+                <p style={styles.category}>{item.category}</p>
+                <h3 style={styles.itemTitle}>{item.title}</h3>
+                <p style={styles.description}>{item.description}</p>
+                <p style={styles.location}>{item.location}</p>
+                <p style={styles.condition}>Condition: {item.condition}</p>
+                <p style={styles.price}>£{item.price}</p>
+
+                <button style={styles.viewButton}>View Details</button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -238,6 +273,12 @@ const styles = {
     justifyContent: "center",
     color: "#555",
     marginBottom: "14px",
+    overflow: "hidden",
+  },
+  itemImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
   },
   category: {
     color: "#2563eb",
@@ -253,6 +294,10 @@ const styles = {
     minHeight: "40px",
   },
   location: {
+    color: "#444",
+    fontSize: "14px",
+  },
+  condition: {
     color: "#444",
     fontSize: "14px",
   },

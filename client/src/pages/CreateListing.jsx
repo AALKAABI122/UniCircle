@@ -1,33 +1,94 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { db, auth } from "../firebase";
 
 function CreateListing() {
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
+  const [condition, setCondition] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleSubmit = (e) => {
+  const [seller, setSeller] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setSeller(currentUser);
+      setCheckingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newListing = {
-      title,
-      price,
-      category,
-      location,
-      description,
-    };
+    if (checkingAuth) {
+      return;
+    }
 
-    console.log("New listing:", newListing);
+    if (!seller) {
+      alert("You must be logged in to create a listing.");
+      navigate("/login");
+      return;
+    }
 
-    alert("Listing created. Database connection will be added later.");
+    if (Number(price) <= 0) {
+      alert("Price must be greater than 0.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const newListing = {
+        title: title.trim(),
+        price: Number(price),
+        category,
+        location,
+        condition,
+        description: description.trim(),
+        sellerId: seller.uid,
+        sellerEmail: seller.email,
+        status: "active",
+        imageUrl: "",
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, "listings"), newListing);
 
     setTitle("");
     setPrice("");
     setCategory("");
     setLocation("");
+    setCondition("");
     setDescription("");
+
+    navigate("/");
+    } catch (error) {
+      console.error("Error creating listing:", error);
+      alert("Error creating listing: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (checkingAuth) {
+    return (
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <p style={styles.subtitle}>Checking login status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.page}>
@@ -36,6 +97,12 @@ function CreateListing() {
         <p style={styles.subtitle}>
           Create a listing for other Brighton students to see.
         </p>
+
+        {!seller && (
+          <div style={styles.warningBox}>
+            You need to log in before creating a listing.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div>
@@ -58,7 +125,7 @@ function CreateListing() {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
-              min="0"
+              min="1"
               style={styles.input}
             />
           </div>
@@ -77,7 +144,25 @@ function CreateListing() {
               <option value="Furniture">Furniture</option>
               <option value="Clothing">Clothing</option>
               <option value="Kitchen">Kitchen</option>
+              <option value="Sports">Sports</option>
               <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={styles.label}>Condition</label>
+            <select
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              required
+              style={styles.input}
+            >
+              <option value="">Select condition</option>
+              <option value="New">New</option>
+              <option value="Like New">Like New</option>
+              <option value="Good">Good</option>
+              <option value="Used">Used</option>
+              <option value="Needs Repair">Needs Repair</option>
             </select>
           </div>
 
@@ -110,8 +195,16 @@ function CreateListing() {
             />
           </div>
 
-          <button type="submit" style={styles.button}>
-            Create Listing
+          <button
+            type="submit"
+            style={{
+              ...styles.button,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+            disabled={loading}
+          >
+            {loading ? "Creating..." : "Create Listing"}
           </button>
         </form>
       </div>
@@ -147,6 +240,14 @@ const styles = {
     textAlign: "center",
     marginBottom: "28px",
   },
+  warningBox: {
+    backgroundColor: "#fef3c7",
+    color: "#92400e",
+    padding: "12px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
   form: {
     display: "flex",
     flexDirection: "column",
@@ -163,6 +264,7 @@ const styles = {
     border: "1px solid #ccc",
     borderRadius: "6px",
     fontSize: "16px",
+    boxSizing: "border-box",
   },
   textarea: {
     width: "100%",
@@ -171,6 +273,7 @@ const styles = {
     borderRadius: "6px",
     fontSize: "16px",
     resize: "vertical",
+    boxSizing: "border-box",
   },
   button: {
     width: "100%",
@@ -180,7 +283,6 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     fontSize: "17px",
-    cursor: "pointer",
   },
 };
 
