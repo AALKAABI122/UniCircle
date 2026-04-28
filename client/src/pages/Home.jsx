@@ -15,6 +15,7 @@ function Home() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [conditionFilter, setConditionFilter] = useState("");
+  const [sortOption, setSortOption] = useState("newest");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -45,6 +46,7 @@ function Home() {
 
         setListings(listingsData);
       } catch (error) {
+        console.error("Error loading listings:", error);
         alert("Error loading listings: " + error.message);
       } finally {
         setLoadingListings(false);
@@ -73,40 +75,57 @@ function Home() {
     setCategoryFilter("");
     setLocationFilter("");
     setConditionFilter("");
+    setSortOption("newest");
   };
 
-  const filteredListings = listings.filter((item) => {
-    const search = searchText.toLowerCase();
+  const filteredListings = listings
+    .filter((item) => {
+      const search = searchText.toLowerCase();
 
-    const matchesSearch =
-      item.title?.toLowerCase().includes(search) ||
-      item.category?.toLowerCase().includes(search) ||
-      item.description?.toLowerCase().includes(search) ||
-      item.location?.toLowerCase().includes(search) ||
-      item.condition?.toLowerCase().includes(search);
+      const matchesSearch =
+        item.title?.toLowerCase().includes(search) ||
+        item.category?.toLowerCase().includes(search) ||
+        item.description?.toLowerCase().includes(search) ||
+        item.location?.toLowerCase().includes(search) ||
+        item.condition?.toLowerCase().includes(search);
 
-    const matchesCategory =
-      categoryFilter === "" || item.category === categoryFilter;
+      const matchesCategory =
+        categoryFilter === "" || item.category === categoryFilter;
 
-    const matchesLocation =
-      locationFilter === "" || item.location === locationFilter;
+      const matchesLocation =
+        locationFilter === "" || item.location === locationFilter;
 
-    const matchesCondition =
-      conditionFilter === "" || item.condition === conditionFilter;
+      const matchesCondition =
+        conditionFilter === "" || item.condition === conditionFilter;
 
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesLocation &&
-      matchesCondition
-    );
-  });
+      const isActive = !item.status || item.status === "active";
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesLocation &&
+        matchesCondition &&
+        isActive
+      );
+    })
+    .sort((a, b) => {
+      if (sortOption === "priceLow") {
+        return Number(a.price || 0) - Number(b.price || 0);
+      }
+
+      if (sortOption === "priceHigh") {
+        return Number(b.price || 0) - Number(a.price || 0);
+      }
+
+      return 0;
+    });
 
   return (
     <div style={styles.page}>
       <header style={styles.header}>
         <div style={styles.logoBox} onClick={() => navigate("/")}>
           <div style={styles.logoIcon}>U</div>
+
           <div>
             <h1 style={styles.logo}>UniCircle</h1>
             <p style={styles.tagline}>Student marketplace</p>
@@ -152,8 +171,8 @@ function Home() {
           </h2>
 
           <p style={styles.heroText}>
-            Find affordable books, electronics, furniture, clothes, and more from
-            students around Brighton campuses.
+            Find affordable books, electronics, furniture, clothes, and more
+            from students around Brighton campuses.
           </p>
 
           <div style={styles.searchPanel}>
@@ -207,6 +226,16 @@ function Home() {
                 <option value="Needs Repair">Needs Repair</option>
               </select>
 
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                style={styles.filterSelect}
+              >
+                <option value="newest">Newest First</option>
+                <option value="priceLow">Price: Low to High</option>
+                <option value="priceHigh">Price: High to Low</option>
+              </select>
+
               <button onClick={clearFilters} style={styles.clearButton}>
                 Clear
               </button>
@@ -219,10 +248,11 @@ function Home() {
         <div style={styles.sectionHeader}>
           <div>
             <h2 style={styles.sectionTitle}>Latest Listings</h2>
+
             <p style={styles.sectionSubtitle}>
               {loadingListings
                 ? "Loading marketplace items..."
-                : `${filteredListings.length} item${
+                : `${filteredListings.length} active item${
                     filteredListings.length === 1 ? "" : "s"
                   } found`}
             </p>
@@ -239,7 +269,9 @@ function Home() {
         {loadingListings ? (
           <div style={styles.emptyState}>
             <h3 style={styles.emptyTitle}>Loading listings...</h3>
-            <p style={styles.emptyText}>Please wait while we load the marketplace.</p>
+            <p style={styles.emptyText}>
+              Please wait while we load the marketplace.
+            </p>
           </div>
         ) : filteredListings.length === 0 ? (
           <div style={styles.emptyState}>
@@ -247,6 +279,7 @@ function Home() {
             <p style={styles.emptyText}>
               Try changing your search or clearing the filters.
             </p>
+
             <button onClick={clearFilters} style={styles.emptyButton}>
               Clear Filters
             </button>
@@ -269,21 +302,17 @@ function Home() {
                     </div>
                   )}
 
-                  <span
-                    style={{
-                      ...styles.statusBadge,
-                      backgroundColor:
-                        item.status === "sold" ? "#fee2e2" : "#dcfce7",
-                      color: item.status === "sold" ? "#991b1b" : "#166534",
-                    }}
-                  >
+                  <span style={styles.statusBadge}>
                     {item.status || "active"}
                   </span>
                 </div>
 
                 <div style={styles.cardBody}>
                   <div style={styles.cardTopRow}>
-                    <p style={styles.category}>{item.category}</p>
+                    <p style={styles.category}>
+                      {item.category || "Uncategorised"}
+                    </p>
+
                     <p style={styles.price}>£{item.price}</p>
                   </div>
 
@@ -296,8 +325,13 @@ function Home() {
                   </p>
 
                   <div style={styles.infoBox}>
-                    <p style={styles.infoText}>📍 {item.location}</p>
-                    <p style={styles.infoText}>⭐ {item.condition}</p>
+                    <p style={styles.infoText}>
+                      📍 {item.location || "Location not provided"}
+                    </p>
+
+                    <p style={styles.infoText}>
+                      ⭐ {item.condition || "Condition not provided"}
+                    </p>
                   </div>
 
                   <button
@@ -442,7 +476,7 @@ const styles = {
     padding: "18px",
     borderRadius: "16px",
     boxShadow: "0 8px 24px rgba(15, 23, 42, 0.12)",
-    maxWidth: "900px",
+    maxWidth: "950px",
     margin: "0 auto",
   },
   searchInput: {
@@ -456,7 +490,7 @@ const styles = {
   },
   filtersRow: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr auto",
+    gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
     gap: "10px",
   },
   filterSelect: {
@@ -550,6 +584,8 @@ const styles = {
     fontSize: "12px",
     fontWeight: "700",
     textTransform: "capitalize",
+    backgroundColor: "#dcfce7",
+    color: "#166534",
   },
   cardBody: {
     padding: "18px",
