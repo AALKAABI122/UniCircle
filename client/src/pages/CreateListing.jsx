@@ -45,6 +45,17 @@ function CreateListing() {
       return;
     }
 
+    if (
+      !title.trim() ||
+      !category ||
+      !location ||
+      !condition ||
+      !description.trim()
+    ) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -64,14 +75,14 @@ function CreateListing() {
 
       await addDoc(collection(db, "listings"), newListing);
 
-    setTitle("");
-    setPrice("");
-    setCategory("");
-    setLocation("");
-    setCondition("");
-    setDescription("");
+      setTitle("");
+      setPrice("");
+      setCategory("");
+      setLocation("");
+      setCondition("");
+      setDescription("");
 
-    navigate("/");
+      navigate("/");
     } catch (error) {
       console.error("Error creating listing:", error);
       alert("Error creating listing: " + error.message);
