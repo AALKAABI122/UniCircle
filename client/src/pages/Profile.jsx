@@ -15,6 +15,7 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -101,10 +102,29 @@ function Profile() {
     }
   };
 
+  const activeListings = listings.filter(
+    (listing) => (listing.status || "active") === "active"
+  );
+
+  const soldListings = listings.filter((listing) => listing.status === "sold");
+
+  const totalValue = listings.reduce((total, listing) => {
+    return total + Number(listing.price || 0);
+  }, 0);
+
+  const filteredListings = listings.filter((listing) => {
+    const status = listing.status || "active";
+
+    if (filter === "all") return true;
+    return status === filter;
+  });
+
   if (loading) {
     return (
       <div style={styles.page}>
-        <p style={styles.loadingText}>Loading your profile...</p>
+        <div style={styles.loadingCard}>
+          <p style={styles.loadingText}>Loading your seller dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -114,109 +134,182 @@ function Profile() {
       <div style={styles.container}>
         <div style={styles.header}>
           <div>
-            <h1 style={styles.title}>My Profile</h1>
-            <p style={styles.subtitle}>Manage your UniCircle listings</p>
+            <h1 style={styles.title}>Seller Dashboard</h1>
+            <p style={styles.subtitle}>
+              Manage your UniCircle listings and track your selling activity.
+            </p>
           </div>
 
-          <a href="/" style={styles.homeButton}>
-            Back to Home
-          </a>
+          <div style={styles.headerButtons}>
+            <a href="/" style={styles.darkButton}>
+              Back to Home
+            </a>
+
+            <a href="/create" style={styles.primaryButton}>
+              Create Listing
+            </a>
+          </div>
         </div>
 
-        <div style={styles.profileCard}>
-          <h2 style={styles.profileTitle}>Account Details</h2>
-          <p style={styles.profileText}>
-            <strong>Email:</strong> {user?.email}
-          </p>
+        <div style={styles.profilePanel}>
+          <div>
+            <h2 style={styles.profileTitle}>Profile Summary</h2>
+            <p style={styles.profileText}>
+              <strong>Email:</strong> {user?.email}
+            </p>
+            <p style={styles.profileText}>
+              <strong>Account status:</strong>{" "}
+              {user?.emailVerified ? "Verified seller" : "Not verified"}
+            </p>
+          </div>
+
+          <div style={styles.sellerBadge}>
+            {user?.emailVerified ? "Verified" : "Unverified"}
+          </div>
         </div>
 
-        <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>My Listings</h2>
-          <a href="/create" style={styles.createButton}>
-            Create New Listing
-          </a>
+        <div style={styles.statsGrid}>
+          <div style={styles.statCard}>
+            <p style={styles.statLabel}>Total Listings</p>
+            <h2 style={styles.statNumber}>{listings.length}</h2>
+          </div>
+
+          <div style={styles.statCard}>
+            <p style={styles.statLabel}>Active Listings</p>
+            <h2 style={styles.statNumber}>{activeListings.length}</h2>
+          </div>
+
+          <div style={styles.statCard}>
+            <p style={styles.statLabel}>Sold Listings</p>
+            <h2 style={styles.statNumber}>{soldListings.length}</h2>
+          </div>
+
+          <div style={styles.statCard}>
+            <p style={styles.statLabel}>Total Listed Value</p>
+            <h2 style={styles.statNumber}>£{totalValue}</h2>
+          </div>
         </div>
 
-        {listings.length === 0 ? (
+        <div style={styles.managementBar}>
+          <div>
+            <h2 style={styles.sectionTitle}>My Listings</h2>
+            <p style={styles.sectionSubtitle}>
+              View, update, mark as sold, or delete your listings.
+            </p>
+          </div>
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            style={styles.filterSelect}
+          >
+            <option value="all">All Listings</option>
+            <option value="active">Active Only</option>
+            <option value="sold">Sold Only</option>
+          </select>
+        </div>
+
+        {filteredListings.length === 0 ? (
           <div style={styles.emptyBox}>
-            <p style={styles.emptyText}>You have not created any listings yet.</p>
-            <a href="/create" style={styles.emptyButton}>
+            <h2 style={styles.emptyTitle}>No listings found</h2>
+            <p style={styles.emptyText}>
+              You do not have any listings in this category yet.
+            </p>
+            <a href="/create" style={styles.primaryButton}>
               Sell Your First Item
             </a>
           </div>
         ) : (
           <div style={styles.grid}>
-            {listings.map((listing) => (
-              <div key={listing.id} style={styles.card}>
-                <div style={styles.imageBox}>
-                  {listing.imageUrl ? (
-                    <img
-                      src={listing.imageUrl}
-                      alt={listing.title}
-                      style={styles.image}
-                    />
-                  ) : (
-                    <span style={styles.imageText}>No Image</span>
-                  )}
-                </div>
+            {filteredListings.map((listing) => {
+              const status = listing.status || "active";
 
-                <div style={styles.cardContent}>
-                  <div style={styles.cardTop}>
-                    <p style={styles.category}>{listing.category}</p>
-                    <span
-                      style={{
-                        ...styles.statusBadge,
-                        backgroundColor:
-                          listing.status === "sold" ? "#fee2e2" : "#dcfce7",
-                        color:
-                          listing.status === "sold" ? "#991b1b" : "#166534",
-                      }}
-                    >
-                      {listing.status || "active"}
-                    </span>
+              return (
+                <div key={listing.id} style={styles.card}>
+                  <div style={styles.imageBox}>
+                    {listing.imageUrl ? (
+                      <img
+                        src={listing.imageUrl}
+                        alt={listing.title}
+                        style={styles.image}
+                      />
+                    ) : (
+                      <div style={styles.placeholderContent}>
+                        <span style={styles.imageText}>No Image</span>
+                      </div>
+                    )}
                   </div>
 
-                  <h3 style={styles.itemTitle}>{listing.title}</h3>
+                  <div style={styles.cardContent}>
+                    <div style={styles.cardTop}>
+                      <p style={styles.category}>
+                        {listing.category || "Uncategorised"}
+                      </p>
 
-                  <p style={styles.price}>£{listing.price}</p>
+                      <span
+                        style={{
+                          ...styles.statusBadge,
+                          backgroundColor:
+                            status === "sold" ? "#fee2e2" : "#dcfce7",
+                          color: status === "sold" ? "#991b1b" : "#166534",
+                        }}
+                      >
+                        {status}
+                      </span>
+                    </div>
 
-                  <p style={styles.info}>
-                    <strong>Location:</strong> {listing.location}
-                  </p>
+                    <h3 style={styles.itemTitle}>
+                      {listing.title || "Untitled Listing"}
+                    </h3>
 
-                  <p style={styles.info}>
-                    <strong>Condition:</strong> {listing.condition}
-                  </p>
+                    <p style={styles.price}>£{listing.price || 0}</p>
 
-                  <p style={styles.description}>{listing.description}</p>
+                    <div style={styles.infoBox}>
+                      <p style={styles.info}>
+                        <strong>Location:</strong>{" "}
+                        {listing.location || "Not provided"}
+                      </p>
 
-                  <div style={styles.buttonGroup}>
-                    <button
-                      onClick={() => handleViewListing(listing.id)}
-                      style={styles.viewButton}
-                    >
-                      View Listing
-                    </button>
+                      <p style={styles.info}>
+                        <strong>Condition:</strong>{" "}
+                        {listing.condition || "Not provided"}
+                      </p>
+                    </div>
 
-                    <button
-                      onClick={() => handleToggleStatus(listing)}
-                      style={styles.statusButton}
-                    >
-                      {listing.status === "sold"
-                        ? "Mark as Active"
-                        : "Mark as Sold"}
-                    </button>
+                    <p style={styles.description}>
+                      {listing.description || "No description provided."}
+                    </p>
 
-                    <button
-                      onClick={() => handleDeleteListing(listing.id)}
-                      style={styles.deleteButton}
-                    >
-                      Delete Listing
-                    </button>
+                    <div style={styles.buttonGroup}>
+                      <button
+                        onClick={() => handleViewListing(listing.id)}
+                        style={styles.viewButton}
+                      >
+                        View Listing
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleStatus(listing)}
+                        style={
+                          status === "sold"
+                            ? styles.activeButton
+                            : styles.statusButton
+                        }
+                      >
+                        {status === "sold" ? "Mark as Active" : "Mark as Sold"}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteListing(listing.id)}
+                        style={styles.deleteButton}
+                      >
+                        Delete Listing
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -232,98 +325,166 @@ const styles = {
     padding: "40px 20px",
   },
   container: {
-    maxWidth: "1150px",
+    maxWidth: "1180px",
     margin: "0 auto",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "24px",
-    gap: "16px",
+    gap: "18px",
     flexWrap: "wrap",
+    marginBottom: "24px",
   },
   title: {
-    fontSize: "34px",
+    fontSize: "36px",
     margin: 0,
     color: "#111827",
   },
   subtitle: {
-    marginTop: "6px",
+    marginTop: "8px",
     color: "#6b7280",
+    fontSize: "15px",
   },
-  homeButton: {
-    textDecoration: "none",
-    backgroundColor: "#111827",
-    color: "white",
-    padding: "10px 16px",
-    borderRadius: "8px",
-  },
-  profileCard: {
-    backgroundColor: "white",
-    padding: "22px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-    marginBottom: "30px",
-  },
-  profileTitle: {
-    marginTop: 0,
-    marginBottom: "10px",
-    fontSize: "22px",
-  },
-  profileText: {
-    margin: 0,
-    color: "#374151",
-  },
-  sectionHeader: {
+  headerButtons: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-    flexWrap: "wrap",
     gap: "12px",
+    flexWrap: "wrap",
   },
-  sectionTitle: {
-    fontSize: "26px",
-    margin: 0,
-  },
-  createButton: {
+  primaryButton: {
     textDecoration: "none",
     backgroundColor: "#2563eb",
     color: "white",
-    padding: "10px 16px",
+    padding: "11px 16px",
     borderRadius: "8px",
+    fontWeight: "bold",
+    display: "inline-block",
+  },
+  darkButton: {
+    textDecoration: "none",
+    backgroundColor: "#111827",
+    color: "white",
+    padding: "11px 16px",
+    borderRadius: "8px",
+    fontWeight: "bold",
+  },
+  profilePanel: {
+    backgroundColor: "white",
+    padding: "24px",
+    borderRadius: "14px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "20px",
+    flexWrap: "wrap",
+    marginBottom: "24px",
+  },
+  profileTitle: {
+    margin: "0 0 10px",
+    fontSize: "23px",
+    color: "#111827",
+  },
+  profileText: {
+    margin: "6px 0",
+    color: "#374151",
+  },
+  sellerBadge: {
+    backgroundColor: "#dcfce7",
+    color: "#166534",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    fontWeight: "bold",
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: "18px",
+    marginBottom: "30px",
+  },
+  statCard: {
+    backgroundColor: "white",
+    padding: "22px",
+    borderRadius: "14px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  },
+  statLabel: {
+    color: "#6b7280",
+    fontSize: "14px",
+    margin: 0,
+  },
+  statNumber: {
+    fontSize: "30px",
+    margin: "8px 0 0",
+    color: "#111827",
+  },
+  managementBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "20px",
+  },
+  sectionTitle: {
+    fontSize: "27px",
+    margin: 0,
+    color: "#111827",
+  },
+  sectionSubtitle: {
+    marginTop: "6px",
+    color: "#6b7280",
+  },
+  filterSelect: {
+    padding: "11px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    backgroundColor: "white",
+    fontSize: "15px",
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
     gap: "24px",
   },
   card: {
     backgroundColor: "white",
-    borderRadius: "14px",
+    borderRadius: "15px",
     overflow: "hidden",
     boxShadow: "0 3px 12px rgba(0,0,0,0.09)",
+    display: "flex",
+    flexDirection: "column",
   },
   imageBox: {
-    height: "180px",
+    height: "185px",
     backgroundColor: "#d1d5db",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     color: "#555",
   },
+  placeholderContent: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#e5e7eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageText: {
+    color: "#6b7280",
+    fontWeight: "bold",
+  },
   image: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
-  imageText: {
-    color: "#6b7280",
-    fontWeight: "500",
-  },
   cardContent: {
     padding: "18px",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
   },
   cardTop: {
     display: "flex",
@@ -340,7 +501,7 @@ const styles = {
   statusBadge: {
     fontSize: "12px",
     fontWeight: "bold",
-    padding: "5px 9px",
+    padding: "5px 10px",
     borderRadius: "999px",
     textTransform: "capitalize",
   },
@@ -350,27 +511,34 @@ const styles = {
     color: "#111827",
   },
   price: {
-    fontSize: "24px",
+    fontSize: "25px",
     fontWeight: "bold",
     margin: "0 0 12px",
     color: "#111827",
   },
+  infoBox: {
+    backgroundColor: "#f9fafb",
+    padding: "10px",
+    borderRadius: "8px",
+  },
   info: {
     fontSize: "14px",
     color: "#4b5563",
-    margin: "6px 0",
+    margin: "5px 0",
   },
   description: {
     fontSize: "14px",
     color: "#6b7280",
     marginTop: "12px",
-    minHeight: "45px",
+    lineHeight: "1.5",
+    minHeight: "48px",
   },
   buttonGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "9px",
-    marginTop: "16px",
+    marginTop: "auto",
+    paddingTop: "16px",
   },
   viewButton: {
     padding: "10px",
@@ -379,6 +547,7 @@ const styles = {
     border: "none",
     borderRadius: "7px",
     cursor: "pointer",
+    fontWeight: "bold",
   },
   statusButton: {
     padding: "10px",
@@ -387,6 +556,16 @@ const styles = {
     border: "none",
     borderRadius: "7px",
     cursor: "pointer",
+    fontWeight: "bold",
+  },
+  activeButton: {
+    padding: "10px",
+    backgroundColor: "#16a34a",
+    color: "white",
+    border: "none",
+    borderRadius: "7px",
+    cursor: "pointer",
+    fontWeight: "bold",
   },
   deleteButton: {
     padding: "10px",
@@ -395,27 +574,33 @@ const styles = {
     border: "none",
     borderRadius: "7px",
     cursor: "pointer",
+    fontWeight: "bold",
   },
   emptyBox: {
     backgroundColor: "white",
-    padding: "30px",
-    borderRadius: "12px",
+    padding: "36px",
+    borderRadius: "14px",
     textAlign: "center",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   },
+  emptyTitle: {
+    marginTop: 0,
+    color: "#111827",
+  },
   emptyText: {
     color: "#6b7280",
-    marginBottom: "18px",
+    marginBottom: "20px",
   },
-  emptyButton: {
-    textDecoration: "none",
-    backgroundColor: "#2563eb",
-    color: "white",
-    padding: "10px 16px",
-    borderRadius: "8px",
+  loadingCard: {
+    backgroundColor: "white",
+    padding: "30px",
+    borderRadius: "12px",
+    maxWidth: "420px",
+    margin: "100px auto",
+    textAlign: "center",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   },
   loadingText: {
-    textAlign: "center",
     fontSize: "18px",
     color: "#374151",
   },
