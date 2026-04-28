@@ -1,13 +1,24 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 
 function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    setLoading(true);
+    setLoginError("");
+    setShowForgotPassword(false);
 
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -17,24 +28,62 @@ function Login() {
       );
 
       if (!userCredential.user.emailVerified) {
-        alert("Please verify your email before accessing UniCircle.");
         await signOut(auth);
+        setLoginError("Please verify your email before accessing UniCircle.");
         return;
       }
 
-      alert("Login successful!");
-      window.location.href = "/";
+      navigate("/");
     } catch (error) {
-      alert(error.message);
+      console.error("Login error:", error);
+
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        setLoginError("Incorrect email or password.");
+        setShowForgotPassword(true);
+      } else if (error.code === "auth/user-not-found") {
+        setLoginError("No account found with this email.");
+      } else if (error.code === "auth/invalid-email") {
+        setLoginError("Please enter a valid email address.");
+      } else if (error.code === "auth/too-many-requests") {
+        setLoginError("Too many failed attempts. Please try again later.");
+        setShowForgotPassword(true);
+      } else {
+        setLoginError(error.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+        <button onClick={() => navigate("/")} style={styles.backButton}>
+          ← Back to Home
+        </button>
+
         <h1 style={styles.title}>Login</h1>
 
         <p style={styles.subtitle}>Sign in to your UniCircle account</p>
+
+        {loginError && (
+          <div style={styles.errorBox}>
+            <p style={styles.errorText}>{loginError}</p>
+
+            {showForgotPassword && (
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                style={styles.forgotButton}
+              >
+                Forgot your password?
+              </button>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} style={styles.form}>
           <div>
@@ -61,16 +110,32 @@ function Login() {
             />
           </div>
 
-          <button type="submit" style={styles.button}>
-            Login
+          <button
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+            style={styles.smallForgotButton}
+          >
+            Forgot your password?
+          </button>
+
+          <button
+            type="submit"
+            style={{
+              ...styles.button,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p style={styles.footerText}>
           Do not have an account?{" "}
-          <a href="/register" style={styles.link}>
+          <button onClick={() => navigate("/register")} style={styles.linkButton}>
             Register here
-          </a>
+          </button>
         </p>
       </div>
     </div>
@@ -85,6 +150,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     padding: "20px",
+    fontFamily: "Arial, sans-serif",
   },
   card: {
     backgroundColor: "white",
@@ -94,16 +160,46 @@ const styles = {
     width: "100%",
     maxWidth: "420px",
   },
+  backButton: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#2563eb",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginBottom: "18px",
+  },
   title: {
     fontSize: "28px",
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: "8px",
+    color: "#111827",
   },
   subtitle: {
     color: "#666",
     textAlign: "center",
     marginBottom: "24px",
+  },
+  errorBox: {
+    backgroundColor: "#fee2e2",
+    color: "#991b1b",
+    padding: "12px",
+    borderRadius: "8px",
+    marginBottom: "18px",
+    textAlign: "center",
+  },
+  errorText: {
+    margin: "0 0 8px",
+    fontSize: "14px",
+  },
+  forgotButton: {
+    backgroundColor: "#991b1b",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
   },
   form: {
     display: "flex",
@@ -121,6 +217,17 @@ const styles = {
     border: "1px solid #ccc",
     borderRadius: "6px",
     fontSize: "16px",
+    boxSizing: "border-box",
+  },
+  smallForgotButton: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#2563eb",
+    cursor: "pointer",
+    fontSize: "14px",
+    textAlign: "right",
+    padding: 0,
+    alignSelf: "flex-end",
   },
   button: {
     width: "100%",
@@ -130,16 +237,20 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     fontSize: "16px",
-    cursor: "pointer",
+    fontWeight: "600",
   },
   footerText: {
     textAlign: "center",
     marginTop: "20px",
     color: "#666",
   },
-  link: {
+  linkButton: {
+    backgroundColor: "transparent",
+    border: "none",
     color: "#2563eb",
-    textDecoration: "none",
+    cursor: "pointer",
+    fontSize: "15px",
+    fontWeight: "600",
   },
 };
 

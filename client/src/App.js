@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import CreateListing from "./pages/CreateListing";
 import ListingDetails from "./pages/ListingDetails";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/create" element={<CreateListing />} />
         <Route path="/listing/:id" element={<ListingDetails />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </Router>
   );
