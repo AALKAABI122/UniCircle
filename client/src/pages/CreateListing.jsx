@@ -95,6 +95,10 @@ function CreateListing() {
     return (
       <div style={styles.page}>
         <div style={styles.card}>
+          <button onClick={() => navigate("/")} style={styles.backButton}>
+            ← Back to Home
+          </button>
+
           <p style={styles.subtitle}>Checking login status...</p>
         </div>
       </div>
@@ -104,6 +108,10 @@ function CreateListing() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+        <button onClick={() => navigate("/")} style={styles.backButton}>
+          ← Back to Home
+        </button>
+
         <h1 style={styles.title}>Sell an Item</h1>
         <p style={styles.subtitle}>
           Create a listing for other Brighton students to see.
@@ -239,6 +247,16 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
     width: "100%",
     maxWidth: "650px",
+  },
+  backButton: {
+    marginBottom: "20px",
+    padding: "10px 14px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#111827",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: "600",
   },
   title: {
     fontSize: "30px",
