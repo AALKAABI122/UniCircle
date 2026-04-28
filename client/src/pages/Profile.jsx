@@ -7,19 +7,21 @@ import {
   getDocs,
   deleteDoc,
   doc,
-  orderBy,
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 
 function Profile() {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        window.location.href = "/login";
+      if (!currentUser || !currentUser.emailVerified) {
+        navigate("/login");
         return;
       }
 
@@ -29,7 +31,7 @@ function Profile() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const fetchUserListings = async (userId) => {
     try {
@@ -37,8 +39,7 @@ function Profile() {
 
       const q = query(
         listingsRef,
-        where("sellerId", "==", userId),
-        orderBy("createdAt", "desc")
+        where("sellerId", "==", userId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -48,9 +49,15 @@ function Profile() {
         ...document.data(),
       }));
 
+      userListings.sort((a, b) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+
       setListings(userListings);
     } catch (error) {
-      alert(error.message);
+      alert("Error loading your listings: " + error.message);
     }
   };
 
@@ -70,7 +77,7 @@ function Profile() {
 
       alert("Listing deleted successfully.");
     } catch (error) {
-      alert(error.message);
+      alert("Error deleting listing: " + error.message);
     }
   };
 
@@ -85,10 +92,15 @@ function Profile() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
+        <button onClick={() => navigate("/")} style={styles.backButton}>
+          ← Back to Home
+        </button>
+
         <h1 style={styles.title}>My Profile</h1>
 
         {user && (
           <div style={styles.profileCard}>
+            <h2 style={styles.cardTitle}>Account Details</h2>
             <p>
               <strong>Email:</strong> {user.email}
             </p>
@@ -98,10 +110,22 @@ function Profile() {
           </div>
         )}
 
-        <h2 style={styles.sectionTitle}>My Listings</h2>
+        <div style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>My Listings</h2>
+
+          <button onClick={() => navigate("/create")} style={styles.createButton}>
+            Create New Listing
+          </button>
+        </div>
 
         {listings.length === 0 ? (
-          <p style={styles.emptyText}>You have not created any listings yet.</p>
+          <div style={styles.emptyBox}>
+            <h3>No listings yet</h3>
+            <p>You have not created any listings yet.</p>
+            <button onClick={() => navigate("/create")} style={styles.createButton}>
+              Sell an Item
+            </button>
+          </div>
         ) : (
           <div style={styles.grid}>
             {listings.map((listing) => (
@@ -121,21 +145,33 @@ function Profile() {
                 <p style={styles.category}>{listing.category}</p>
                 <h3 style={styles.itemTitle}>{listing.title}</h3>
                 <p style={styles.description}>{listing.description}</p>
+
                 <p style={styles.info}>
                   <strong>Location:</strong> {listing.location}
                 </p>
+
                 <p style={styles.info}>
                   <strong>Condition:</strong> {listing.condition}
                 </p>
+
                 <p style={styles.price}>£{listing.price}</p>
                 <p style={styles.status}>Status: {listing.status}</p>
 
-                <button
-                  onClick={() => handleDelete(listing.id)}
-                  style={styles.deleteButton}
-                >
-                  Delete Listing
-                </button>
+                <div style={styles.buttonRow}>
+                  <button
+                    onClick={() => navigate(`/listing/${listing.id}`)}
+                    style={styles.viewButton}
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(listing.id)}
+                    style={styles.deleteButton}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -156,30 +192,58 @@ const styles = {
     maxWidth: "1100px",
     margin: "0 auto",
   },
+  backButton: {
+    marginBottom: "20px",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "none",
+    backgroundColor: "#111827",
+    color: "white",
+    cursor: "pointer",
+  },
   title: {
-    fontSize: "32px",
+    fontSize: "34px",
     marginBottom: "20px",
     color: "#111827",
   },
   profileCard: {
     backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "10px",
+    padding: "22px",
+    borderRadius: "12px",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
     marginBottom: "30px",
   },
+  cardTitle: {
+    marginTop: 0,
+    fontSize: "22px",
+  },
+  sectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
   sectionTitle: {
     fontSize: "26px",
-    marginBottom: "20px",
+    margin: 0,
+  },
+  createButton: {
+    padding: "10px 16px",
+    backgroundColor: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "15px",
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
     gap: "24px",
   },
   card: {
     backgroundColor: "white",
-    borderRadius: "10px",
+    borderRadius: "12px",
     padding: "18px",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   },
@@ -225,21 +289,36 @@ const styles = {
     fontSize: "14px",
     color: "#555",
   },
+  buttonRow: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "12px",
+  },
+  viewButton: {
+    flex: 1,
+    padding: "10px",
+    backgroundColor: "#111827",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
   deleteButton: {
-    width: "100%",
+    flex: 1,
     padding: "10px",
     backgroundColor: "#dc2626",
     color: "white",
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-    marginTop: "12px",
   },
-  emptyText: {
+  emptyBox: {
     backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "10px",
+    padding: "30px",
+    borderRadius: "12px",
     color: "#666",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    textAlign: "center",
   },
   loadingText: {
     textAlign: "center",

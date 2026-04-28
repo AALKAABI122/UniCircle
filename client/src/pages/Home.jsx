@@ -88,6 +88,14 @@ function Home() {
           {user ? (
             <>
               <span style={styles.userText}>{user.email}</span>
+
+              <button
+                onClick={() => navigate("/profile")}
+                style={styles.profileButton}
+              >
+                My Profile
+              </button>
+
               <button onClick={handleLogout} style={styles.logoutButton}>
                 Logout
               </button>
@@ -206,6 +214,14 @@ const styles = {
   userText: {
     color: "#333",
     fontSize: "14px",
+  },
+  profileButton: {
+    backgroundColor: "#111827",
+    color: "white",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
   logoutButton: {
     backgroundColor: "#ef4444",
