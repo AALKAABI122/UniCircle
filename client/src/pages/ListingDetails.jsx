@@ -34,6 +34,17 @@ function ListingDetails() {
     fetchListing();
   }, [id]);
 
+  const copySellerEmail = async () => {
+    if (!listing?.sellerEmail) return;
+
+    try {
+      await navigator.clipboard.writeText(listing.sellerEmail);
+      alert("Seller email copied: " + listing.sellerEmail);
+    } catch (error) {
+      alert("Seller email: " + listing.sellerEmail);
+    }
+  };
+
   if (loading) {
     return (
       <div style={styles.page}>
@@ -50,6 +61,7 @@ function ListingDetails() {
         <div style={styles.card}>
           <h1>Listing not found</h1>
           <p>This item may have been removed or the link may be incorrect.</p>
+
           <button onClick={() => navigate("/")} style={styles.backButton}>
             Back to Home
           </button>
@@ -62,6 +74,8 @@ function ListingDetails() {
   const emailBody = encodeURIComponent(
     `Hi, I saw your listing "${listing.title}" on UniCircle and I am interested. Is it still available?`
   );
+
+  const mailtoLink = `mailto:${listing.sellerEmail}?subject=${emailSubject}&body=${emailBody}`;
 
   return (
     <div style={styles.page}>
@@ -86,9 +100,9 @@ function ListingDetails() {
           <div style={styles.detailsCard}>
             <p style={styles.category}>{listing.category || "Uncategorised"}</p>
 
-            <h1 style={styles.title}>{listing.title}</h1>
+            <h1 style={styles.title}>{listing.title || "Untitled Listing"}</h1>
 
-            <p style={styles.price}>£{listing.price}</p>
+            <p style={styles.price}>£{listing.price || 0}</p>
 
             <div style={styles.infoRow}>
               <strong>Condition:</strong>
@@ -106,6 +120,7 @@ function ListingDetails() {
             </div>
 
             <h2 style={styles.subheading}>Description</h2>
+
             <p style={styles.description}>
               {listing.description || "No description provided."}
             </p>
@@ -119,12 +134,24 @@ function ListingDetails() {
               </p>
 
               {listing.sellerEmail ? (
-                <a
-                  href={`mailto:${listing.sellerEmail}?subject=${emailSubject}&body=${emailBody}`}
-                  style={styles.contactButton}
-                >
-                  Contact Seller
-                </a>
+                <>
+                  <a href={mailtoLink} style={styles.contactButton}>
+                    Contact Seller
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={copySellerEmail}
+                    style={styles.copyButton}
+                  >
+                    Copy Seller Email
+                  </button>
+
+                  <p style={styles.helpText}>
+                    If the contact button does not open an email app, copy the
+                    seller email instead.
+                  </p>
+                </>
               ) : (
                 <button style={styles.disabledButton} disabled>
                   Contact unavailable
@@ -157,10 +184,12 @@ const styles = {
     fontFamily: "Arial, sans-serif",
     padding: "30px",
   },
+
   container: {
     maxWidth: "1100px",
     margin: "0 auto",
   },
+
   card: {
     backgroundColor: "white",
     padding: "28px",
@@ -170,6 +199,7 @@ const styles = {
     margin: "80px auto",
     textAlign: "center",
   },
+
   backButton: {
     marginBottom: "20px",
     padding: "10px 14px",
@@ -179,11 +209,13 @@ const styles = {
     color: "white",
     cursor: "pointer",
   },
+
   grid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "28px",
   },
+
   imageBox: {
     minHeight: "420px",
     backgroundColor: "#d1d5db",
@@ -195,32 +227,38 @@ const styles = {
     fontSize: "20px",
     overflow: "hidden",
   },
+
   image: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
+
   detailsCard: {
     backgroundColor: "white",
     padding: "28px",
     borderRadius: "12px",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   },
+
   category: {
     color: "#2563eb",
     fontWeight: "bold",
     marginBottom: "8px",
   },
+
   title: {
     fontSize: "34px",
     margin: "0 0 12px",
   },
+
   price: {
     fontSize: "30px",
     fontWeight: "bold",
     color: "#111827",
     marginBottom: "24px",
   },
+
   infoRow: {
     display: "flex",
     justifyContent: "space-between",
@@ -228,21 +266,25 @@ const styles = {
     padding: "12px 0",
     gap: "20px",
   },
+
   subheading: {
     fontSize: "20px",
     marginTop: "24px",
     marginBottom: "10px",
   },
+
   description: {
     color: "#555",
     lineHeight: "1.6",
   },
+
   sellerBox: {
     backgroundColor: "#f9fafb",
     padding: "16px",
     borderRadius: "10px",
     marginTop: "20px",
   },
+
   contactButton: {
     marginTop: "10px",
     width: "100%",
@@ -258,6 +300,27 @@ const styles = {
     textAlign: "center",
     boxSizing: "border-box",
   },
+
+  copyButton: {
+    marginTop: "10px",
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#111827",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "16px",
+  },
+
+  helpText: {
+    fontSize: "13px",
+    color: "#6b7280",
+    marginTop: "10px",
+    marginBottom: 0,
+    lineHeight: "1.5",
+  },
+
   disabledButton: {
     marginTop: "10px",
     width: "100%",
@@ -269,17 +332,20 @@ const styles = {
     fontSize: "16px",
     cursor: "not-allowed",
   },
+
   safetyBox: {
     backgroundColor: "#fff7ed",
     padding: "16px",
     borderRadius: "10px",
     marginTop: "20px",
   },
+
   safetyTitle: {
     fontSize: "18px",
     marginTop: 0,
     color: "#9a3412",
   },
+
   safetyList: {
     color: "#7c2d12",
     lineHeight: "1.7",
