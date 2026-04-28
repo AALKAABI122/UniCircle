@@ -133,6 +133,16 @@ function ListingDetails() {
                 {listing.sellerEmail || "No seller email provided"}
               </p>
 
+              {listing.sellerId && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/seller/${listing.sellerId}`)}
+                  style={styles.sellerProfileButton}
+                >
+                  View Seller Profile
+                </button>
+              )}
+
               {listing.sellerEmail ? (
                 <>
                   <a href={mailtoLink} style={styles.contactButton}>
@@ -283,6 +293,18 @@ const styles = {
     padding: "16px",
     borderRadius: "10px",
     marginTop: "20px",
+  },
+
+  sellerProfileButton: {
+    marginTop: "10px",
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#16a34a",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "16px",
   },
 
   contactButton: {
