@@ -7,12 +7,18 @@ import { db, auth } from "../firebase";
 function CreateListing() {
   const navigate = useNavigate();
 
+  const CLOUDINARY_CLOUD_NAME = "ddupw7rbg";
+  const CLOUDINARY_UPLOAD_PRESET = "unicircle-listings";
+
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
   const [condition, setCondition] = useState("");
   const [description, setDescription] = useState("");
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
   const [seller, setSeller] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -26,6 +32,55 @@ function CreateListing() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose a valid image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be smaller than 5MB.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const uploadImageToCloudinary = async () => {
+    if (!imageFile) {
+      return "";
+    }
+
+    const formData = new FormData();
+    formData.append("file", imageFile);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Image upload failed.");
+    }
+
+    return data.secure_url;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,13 +107,15 @@ function CreateListing() {
       !condition ||
       !description.trim()
     ) {
-      alert("Please fill in all fields.");
+      alert("Please fill in all required fields.");
       return;
     }
 
     setLoading(true);
 
     try {
+      const uploadedImageUrl = await uploadImageToCloudinary();
+
       const newListing = {
         title: title.trim(),
         price: Number(price),
@@ -69,7 +126,7 @@ function CreateListing() {
         sellerId: seller.uid,
         sellerEmail: seller.email,
         status: "active",
-        imageUrl: "",
+        imageUrl: uploadedImageUrl,
         createdAt: serverTimestamp(),
       };
 
@@ -81,6 +138,8 @@ function CreateListing() {
       setLocation("");
       setCondition("");
       setDescription("");
+      setImageFile(null);
+      setImagePreview("");
 
       navigate("/");
     } catch (error) {
@@ -112,10 +171,16 @@ function CreateListing() {
           ← Back to Home
         </button>
 
-        <h1 style={styles.title}>Sell an Item</h1>
-        <p style={styles.subtitle}>
-          Create a listing for other Brighton students to see.
-        </p>
+        <div style={styles.headerBox}>
+          <p style={styles.badge}>Create Listing</p>
+
+          <h1 style={styles.title}>Sell an Item</h1>
+
+          <p style={styles.subtitle}>
+            Add your item details and upload a clear product photo so other
+            Brighton students can see the real condition.
+          </p>
+        </div>
 
         {!seller && (
           <div style={styles.warningBox}>
@@ -203,6 +268,44 @@ function CreateListing() {
           </div>
 
           <div>
+            <label style={styles.label}>Product Image</label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={styles.fileInput}
+            />
+
+            <p style={styles.helpText}>
+              Optional, but recommended. Upload a clear photo under 5MB.
+            </p>
+          </div>
+
+          {imagePreview && (
+            <div style={styles.previewBox}>
+              <p style={styles.previewLabel}>Image Preview</p>
+
+              <img
+                src={imagePreview}
+                alt="Listing preview"
+                style={styles.previewImage}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setImageFile(null);
+                  setImagePreview("");
+                }}
+                style={styles.removeImageButton}
+              >
+                Remove Image
+              </button>
+            </div>
+          )}
+
+          <div>
             <label style={styles.label}>Description</label>
             <textarea
               placeholder="Describe the condition, reason for selling, collection details..."
@@ -223,7 +326,7 @@ function CreateListing() {
             }}
             disabled={loading}
           >
-            {loading ? "Creating..." : "Create Listing"}
+            {loading ? "Creating Listing..." : "Create Listing"}
           </button>
         </form>
       </div>
@@ -234,84 +337,172 @@ function CreateListing() {
 const styles = {
   page: {
     minHeight: "100vh",
-    backgroundColor: "#f3f4f6",
+    background:
+      "linear-gradient(135deg, #dbeafe 0%, #eef2ff 45%, #f8fafc 100%)",
     display: "flex",
     justifyContent: "center",
     padding: "40px 20px",
     fontFamily: "Arial, sans-serif",
+    color: "#111827",
   },
+
   card: {
     backgroundColor: "white",
     padding: "32px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    borderRadius: "18px",
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
     width: "100%",
-    maxWidth: "650px",
+    maxWidth: "700px",
+    border: "1px solid #e5e7eb",
   },
+
   backButton: {
     marginBottom: "20px",
     padding: "10px 14px",
-    borderRadius: "8px",
+    borderRadius: "999px",
     border: "none",
     backgroundColor: "#111827",
     color: "white",
     cursor: "pointer",
-    fontWeight: "600",
+    fontWeight: "700",
   },
-  title: {
-    fontSize: "30px",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: "8px",
-  },
-  subtitle: {
-    color: "#666",
+
+  headerBox: {
     textAlign: "center",
     marginBottom: "28px",
   },
+
+  badge: {
+    display: "inline-block",
+    backgroundColor: "#eff6ff",
+    color: "#2563eb",
+    padding: "7px 12px",
+    borderRadius: "999px",
+    fontWeight: "800",
+    fontSize: "13px",
+    margin: "0 0 12px",
+  },
+
+  title: {
+    fontSize: "34px",
+    fontWeight: "800",
+    textAlign: "center",
+    margin: "0 0 8px",
+  },
+
+  subtitle: {
+    color: "#6b7280",
+    textAlign: "center",
+    margin: 0,
+    lineHeight: "1.6",
+  },
+
   warningBox: {
     backgroundColor: "#fef3c7",
     color: "#92400e",
     padding: "12px",
-    borderRadius: "6px",
+    borderRadius: "10px",
     marginBottom: "20px",
     textAlign: "center",
+    fontWeight: "600",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "18px",
   },
+
   label: {
     display: "block",
     marginBottom: "6px",
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#111827",
   },
+
   input: {
     width: "100%",
-    padding: "11px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
+    padding: "12px",
+    border: "1px solid #d1d5db",
+    borderRadius: "10px",
     fontSize: "16px",
     boxSizing: "border-box",
+    outlineColor: "#2563eb",
+    backgroundColor: "white",
   },
+
+  fileInput: {
+    width: "100%",
+    padding: "12px",
+    border: "1px dashed #93c5fd",
+    borderRadius: "10px",
+    backgroundColor: "#eff6ff",
+    fontSize: "15px",
+    boxSizing: "border-box",
+    cursor: "pointer",
+  },
+
   textarea: {
     width: "100%",
-    padding: "11px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
+    padding: "12px",
+    border: "1px solid #d1d5db",
+    borderRadius: "10px",
     fontSize: "16px",
     resize: "vertical",
     boxSizing: "border-box",
+    outlineColor: "#2563eb",
   },
+
+  helpText: {
+    color: "#6b7280",
+    fontSize: "13px",
+    margin: "7px 0 0",
+    lineHeight: "1.5",
+  },
+
+  previewBox: {
+    backgroundColor: "#f9fafb",
+    border: "1px solid #e5e7eb",
+    borderRadius: "14px",
+    padding: "14px",
+  },
+
+  previewLabel: {
+    margin: "0 0 10px",
+    fontWeight: "700",
+    color: "#374151",
+  },
+
+  previewImage: {
+    width: "100%",
+    maxHeight: "320px",
+    objectFit: "cover",
+    borderRadius: "12px",
+    border: "1px solid #e5e7eb",
+    display: "block",
+  },
+
+  removeImageButton: {
+    marginTop: "12px",
+    padding: "10px 14px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#fee2e2",
+    color: "#991b1b",
+    cursor: "pointer",
+    fontWeight: "700",
+  },
+
   button: {
     width: "100%",
-    padding: "13px",
+    padding: "14px",
     backgroundColor: "#2563eb",
     color: "white",
     border: "none",
-    borderRadius: "6px",
+    borderRadius: "10px",
     fontSize: "17px",
+    fontWeight: "800",
+    boxShadow: "0 6px 16px rgba(37, 99, 235, 0.25)",
   },
 };
 

@@ -163,26 +163,53 @@ function Home() {
       </header>
 
       <section style={styles.hero}>
+        <div style={styles.heroDecorOne}></div>
+        <div style={styles.heroDecorTwo}></div>
+
         <div style={styles.heroContent}>
           <p style={styles.heroBadge}>University of Brighton Marketplace</p>
 
           <h2 style={styles.heroTitle}>
-            Buy and sell student essentials safely
+            Buy and sell student essentials with confidence
           </h2>
 
           <p style={styles.heroText}>
-            Find affordable books, electronics, furniture, clothes, and more
-            from students around Brighton campuses.
+            Discover affordable books, electronics, furniture, clothes, kitchen
+            items, and more from students around Brighton campuses.
           </p>
 
+          <div style={styles.heroActions}>
+            <button
+              onClick={() => navigate(user ? "/create" : "/login")}
+              style={styles.heroPrimaryButton}
+            >
+              Start Selling
+            </button>
+
+            <button
+              onClick={() =>
+                document
+                  .getElementById("latest-listings")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              style={styles.heroSecondaryButton}
+            >
+              Browse Items
+            </button>
+          </div>
+
           <div style={styles.searchPanel}>
-            <input
-              type="text"
-              placeholder="Search for laptops, books, furniture..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={styles.searchInput}
-            />
+            <div style={styles.searchInputWrap}>
+              
+
+              <input
+                type="text"
+                placeholder="Search for laptops, books, furniture..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={styles.searchInput}
+              />
+            </div>
 
             <div style={styles.filtersRow}>
               <select
@@ -244,9 +271,11 @@ function Home() {
         </div>
       </section>
 
-      <section style={styles.section}>
+      <section id="latest-listings" style={styles.section}>
         <div style={styles.sectionHeader}>
           <div>
+            <p style={styles.sectionEyebrow}>Marketplace</p>
+
             <h2 style={styles.sectionTitle}>Latest Listings</h2>
 
             <p style={styles.sectionSubtitle}>
@@ -268,6 +297,7 @@ function Home() {
 
         {loadingListings ? (
           <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>⏳</div>
             <h3 style={styles.emptyTitle}>Loading listings...</h3>
             <p style={styles.emptyText}>
               Please wait while we load the marketplace.
@@ -275,6 +305,7 @@ function Home() {
           </div>
         ) : filteredListings.length === 0 ? (
           <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>🔍</div>
             <h3 style={styles.emptyTitle}>No listings found</h3>
             <p style={styles.emptyText}>
               Try changing your search or clearing the filters.
@@ -313,24 +344,26 @@ function Home() {
                       {item.category || "Uncategorised"}
                     </p>
 
-                    <p style={styles.price}>£{item.price}</p>
+                    <p style={styles.price}>£{item.price || 0}</p>
                   </div>
 
-                  <h3 style={styles.itemTitle}>{item.title}</h3>
+                  <h3 style={styles.itemTitle}>
+                    {item.title || "Untitled Listing"}
+                  </h3>
 
                   <p style={styles.description}>
-                    {item.description?.length > 90
-                      ? item.description.slice(0, 90) + "..."
-                      : item.description}
+                    {item.description?.length > 95
+                      ? item.description.slice(0, 95) + "..."
+                      : item.description || "No description provided."}
                   </p>
 
                   <div style={styles.infoBox}>
                     <p style={styles.infoText}>
-                      📍 {item.location || "Location not provided"}
+                      <b>Location:</b>  {item.location || "Location not provided"}
                     </p>
 
                     <p style={styles.infoText}>
-                      ⭐ {item.condition || "Condition not provided"}
+                      <b>Condition: </b> {item.condition || "Condition not provided"}
                     </p>
                   </div>
 
@@ -353,320 +386,467 @@ function Home() {
 const styles = {
   page: {
     minHeight: "100vh",
-    backgroundColor: "#f4f6f8",
-    fontFamily: "Arial, sans-serif",
-    color: "#111827",
+    backgroundColor: "#f8fafc",
+    fontFamily:
+      "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    color: "#0f172a",
   },
+
   header: {
-    backgroundColor: "white",
-    padding: "18px 48px",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    backdropFilter: "blur(14px)",
+    padding: "16px 48px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 2px 12px rgba(15, 23, 42, 0.08)",
+    boxShadow: "0 1px 0 rgba(226, 232, 240, 0.9)",
     position: "sticky",
     top: 0,
     zIndex: 10,
   },
+
   logoBox: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
     cursor: "pointer",
   },
+
   logoIcon: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "12px",
-    backgroundColor: "#2563eb",
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #2563eb, #7c3aed)",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
+    fontWeight: "900",
     fontSize: "22px",
+    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.22)",
   },
+
   logo: {
     margin: 0,
     fontSize: "25px",
-    color: "#111827",
+    color: "#0f172a",
+    letterSpacing: "-0.04em",
   },
+
   tagline: {
     margin: 0,
-    color: "#6b7280",
+    color: "#64748b",
     fontSize: "13px",
   },
+
   nav: {
     display: "flex",
-    gap: "12px",
+    gap: "10px",
     alignItems: "center",
     flexWrap: "wrap",
   },
+
   navButton: {
     backgroundColor: "transparent",
     border: "none",
-    color: "#374151",
-    fontWeight: "600",
+    color: "#334155",
+    fontWeight: "700",
     fontSize: "15px",
     cursor: "pointer",
     padding: "10px 12px",
+    borderRadius: "10px",
   },
+
   profileButton: {
-    backgroundColor: "#111827",
+    backgroundColor: "#0f172a",
     color: "white",
     border: "none",
     padding: "10px 14px",
-    borderRadius: "8px",
+    borderRadius: "10px",
     cursor: "pointer",
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
   logoutButton: {
     backgroundColor: "#fee2e2",
     color: "#991b1b",
     border: "none",
     padding: "10px 14px",
-    borderRadius: "8px",
+    borderRadius: "10px",
     cursor: "pointer",
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
   sellButton: {
     textDecoration: "none",
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
     color: "white",
     padding: "11px 16px",
-    borderRadius: "8px",
-    fontWeight: "600",
+    borderRadius: "10px",
+    fontWeight: "800",
+    boxShadow: "0 10px 18px rgba(37, 99, 235, 0.22)",
   },
+
   hero: {
+    position: "relative",
+    overflow: "hidden",
     background:
-      "linear-gradient(135deg, #dbeafe 0%, #eef2ff 45%, #f8fafc 100%)",
-    padding: "70px 20px",
+      "radial-gradient(circle at top left, #dbeafe 0%, transparent 34%), linear-gradient(135deg, #eff6ff 0%, #eef2ff 45%, #ffffff 100%)",
+    padding: "82px 20px 76px",
   },
+
+  heroDecorOne: {
+    position: "absolute",
+    width: "260px",
+    height: "260px",
+    borderRadius: "999px",
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    top: "-90px",
+    right: "-60px",
+  },
+
+  heroDecorTwo: {
+    position: "absolute",
+    width: "220px",
+    height: "220px",
+    borderRadius: "999px",
+    backgroundColor: "rgba(124, 58, 237, 0.1)",
+    bottom: "-100px",
+    left: "8%",
+  },
+
   heroContent: {
-    maxWidth: "1000px",
+    position: "relative",
+    maxWidth: "1050px",
     margin: "0 auto",
     textAlign: "center",
   },
+
   heroBadge: {
     display: "inline-block",
     backgroundColor: "white",
     color: "#2563eb",
-    padding: "8px 14px",
+    padding: "9px 16px",
     borderRadius: "999px",
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: "14px",
-    marginBottom: "18px",
-    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.12)",
+    marginBottom: "20px",
+    boxShadow: "0 10px 25px rgba(37, 99, 235, 0.12)",
+    border: "1px solid #dbeafe",
   },
+
   heroTitle: {
-    fontSize: "44px",
-    lineHeight: "1.1",
-    margin: "0 0 16px",
-    color: "#111827",
+    fontSize: "56px",
+    lineHeight: "1.03",
+    margin: "0 auto 18px",
+    color: "#0f172a",
+    letterSpacing: "-0.06em",
+    maxWidth: "850px",
   },
+
   heroText: {
-    fontSize: "18px",
-    color: "#4b5563",
-    maxWidth: "720px",
+    fontSize: "19px",
+    color: "#475569",
+    maxWidth: "730px",
     margin: "0 auto 28px",
-    lineHeight: "1.6",
+    lineHeight: "1.7",
   },
-  searchPanel: {
+
+  heroActions: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginBottom: "30px",
+  },
+
+  heroPrimaryButton: {
+    border: "none",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
+    color: "white",
+    padding: "13px 20px",
+    borderRadius: "12px",
+    fontWeight: "800",
+    cursor: "pointer",
+    fontSize: "15px",
+    boxShadow: "0 14px 24px rgba(37, 99, 235, 0.25)",
+  },
+
+  heroSecondaryButton: {
+    border: "1px solid #cbd5e1",
     backgroundColor: "white",
+    color: "#0f172a",
+    padding: "13px 20px",
+    borderRadius: "12px",
+    fontWeight: "800",
+    cursor: "pointer",
+    fontSize: "15px",
+  },
+
+  searchPanel: {
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    backdropFilter: "blur(14px)",
     padding: "18px",
-    borderRadius: "16px",
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.12)",
-    maxWidth: "950px",
+    borderRadius: "22px",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.14)",
+    border: "1px solid rgba(226, 232, 240, 0.9)",
+    maxWidth: "980px",
     margin: "0 auto",
   },
-  searchInput: {
-    width: "100%",
-    padding: "15px",
-    borderRadius: "10px",
-    border: "1px solid #d1d5db",
-    fontSize: "16px",
-    boxSizing: "border-box",
+
+  searchInputWrap: {
+    position: "relative",
     marginBottom: "12px",
   },
+
+  searchIcon: {
+    position: "absolute",
+    left: "16px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    fontSize: "16px",
+  },
+
+  searchInput: {
+    width: "100%",
+    padding: "16px 16px 16px 44px",
+    borderRadius: "14px",
+    border: "1px solid #cbd5e1",
+    fontSize: "16px",
+    boxSizing: "border-box",
+    outline: "none",
+    backgroundColor: "#ffffff",
+  },
+
   filtersRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
     gap: "10px",
   },
+
   filterSelect: {
-    padding: "12px",
-    borderRadius: "10px",
-    border: "1px solid #d1d5db",
+    padding: "13px",
+    borderRadius: "14px",
+    border: "1px solid #cbd5e1",
     fontSize: "15px",
     backgroundColor: "white",
+    color: "#334155",
+    outline: "none",
   },
+
   clearButton: {
-    padding: "12px 16px",
-    borderRadius: "10px",
-    border: "1px solid #d1d5db",
-    backgroundColor: "#f9fafb",
-    color: "#374151",
-    fontWeight: "600",
+    padding: "13px 16px",
+    borderRadius: "14px",
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#f8fafc",
+    color: "#334155",
+    fontWeight: "800",
     cursor: "pointer",
   },
+
   section: {
     maxWidth: "1180px",
     margin: "0 auto",
-    padding: "44px 20px",
+    padding: "54px 20px",
   },
+
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "24px",
+    alignItems: "end",
+    marginBottom: "26px",
     gap: "16px",
   },
-  sectionTitle: {
-    fontSize: "30px",
-    margin: "0 0 6px",
+
+  sectionEyebrow: {
+    margin: "0 0 8px",
+    color: "#2563eb",
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    fontSize: "13px",
   },
+
+  sectionTitle: {
+    fontSize: "34px",
+    margin: "0 0 6px",
+    letterSpacing: "-0.04em",
+  },
+
   sectionSubtitle: {
     margin: 0,
-    color: "#6b7280",
+    color: "#64748b",
   },
+
   secondarySellButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
     color: "white",
     border: "none",
-    padding: "12px 16px",
-    borderRadius: "10px",
+    padding: "13px 17px",
+    borderRadius: "12px",
     cursor: "pointer",
-    fontWeight: "700",
+    fontWeight: "800",
+    boxShadow: "0 12px 20px rgba(37, 99, 235, 0.2)",
   },
+
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "24px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))",
+    gap: "26px",
   },
+
   card: {
     backgroundColor: "white",
-    borderRadius: "16px",
+    borderRadius: "22px",
     overflow: "hidden",
-    boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
-    border: "1px solid #e5e7eb",
+    boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
+    border: "1px solid #e2e8f0",
   },
+
   imagePlaceholder: {
-    height: "180px",
-    backgroundColor: "#e5e7eb",
+    height: "190px",
+    background:
+      "linear-gradient(135deg, #e2e8f0 0%, #f8fafc 55%, #e0f2fe 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#6b7280",
+    color: "#64748b",
     position: "relative",
     overflow: "hidden",
   },
+
   itemImage: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
+
   noImageBox: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     gap: "6px",
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
   noImageIcon: {
-    fontSize: "28px",
+    fontSize: "32px",
   },
+
   statusBadge: {
     position: "absolute",
     top: "12px",
     right: "12px",
-    padding: "6px 10px",
+    padding: "6px 11px",
     borderRadius: "999px",
     fontSize: "12px",
-    fontWeight: "700",
+    fontWeight: "900",
     textTransform: "capitalize",
     backgroundColor: "#dcfce7",
     color: "#166534",
+    boxShadow: "0 8px 16px rgba(22, 101, 52, 0.12)",
   },
+
   cardBody: {
-    padding: "18px",
+    padding: "20px",
   },
+
   cardTopRow: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: "10px",
   },
+
   category: {
     color: "#2563eb",
-    fontSize: "13px",
-    fontWeight: "800",
+    fontSize: "12px",
+    fontWeight: "900",
     margin: 0,
     textTransform: "uppercase",
-    letterSpacing: "0.04em",
+    letterSpacing: "0.08em",
   },
+
   price: {
-    fontSize: "22px",
-    fontWeight: "800",
+    fontSize: "23px",
+    fontWeight: "900",
     margin: 0,
-    color: "#111827",
+    color: "#0f172a",
   },
+
   itemTitle: {
-    fontSize: "20px",
-    margin: "12px 0 8px",
-    color: "#111827",
+    fontSize: "21px",
+    margin: "13px 0 8px",
+    color: "#0f172a",
+    letterSpacing: "-0.02em",
   },
+
   description: {
-    color: "#6b7280",
-    minHeight: "44px",
-    lineHeight: "1.5",
+    color: "#64748b",
+    minHeight: "50px",
+    lineHeight: "1.55",
     marginBottom: "14px",
   },
+
   infoBox: {
-    backgroundColor: "#f9fafb",
-    borderRadius: "10px",
-    padding: "10px",
-    marginBottom: "14px",
+    backgroundColor: "#f8fafc",
+    borderRadius: "14px",
+    padding: "11px",
+    marginBottom: "15px",
+    border: "1px solid #e2e8f0",
   },
+
   infoText: {
-    color: "#374151",
+    color: "#334155",
     fontSize: "14px",
-    margin: "4px 0",
+    margin: "5px 0",
   },
+
   viewButton: {
     width: "100%",
-    padding: "12px",
-    backgroundColor: "#111827",
+    padding: "13px",
+    backgroundColor: "#0f172a",
     color: "white",
     border: "none",
-    borderRadius: "10px",
+    borderRadius: "14px",
     cursor: "pointer",
-    fontWeight: "700",
+    fontWeight: "900",
     fontSize: "15px",
   },
+
   emptyState: {
     backgroundColor: "white",
-    borderRadius: "16px",
-    padding: "40px 20px",
+    borderRadius: "22px",
+    padding: "46px 20px",
     textAlign: "center",
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 4px 16px rgba(15, 23, 42, 0.06)",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 14px 35px rgba(15, 23, 42, 0.08)",
   },
+
+  emptyIcon: {
+    fontSize: "34px",
+    marginBottom: "12px",
+  },
+
   emptyTitle: {
-    fontSize: "24px",
+    fontSize: "25px",
     margin: "0 0 8px",
+    letterSpacing: "-0.03em",
   },
+
   emptyText: {
-    color: "#6b7280",
+    color: "#64748b",
     marginBottom: "18px",
   },
+
   emptyButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #2563eb, #4f46e5)",
     color: "white",
     border: "none",
-    padding: "12px 16px",
-    borderRadius: "10px",
+    padding: "13px 17px",
+    borderRadius: "12px",
     cursor: "pointer",
-    fontWeight: "700",
+    fontWeight: "800",
   },
 };
 

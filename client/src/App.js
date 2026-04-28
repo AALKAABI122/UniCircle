@@ -7,6 +7,7 @@ import ListingDetails from "./pages/ListingDetails";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import SellerProfile from "./pages/SellerProfile";
+import "./App.css";
 
 function App() {
   return (
